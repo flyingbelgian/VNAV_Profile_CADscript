@@ -1,4 +1,5 @@
 import calculator
+import output
 
 values = calculator.getSource()
 
@@ -12,11 +13,9 @@ values = values | calculator.addOAS(values)
 
 values = values | calculator.addLateralLimits(values)
 
-print(values)
+#Round all parameters to maximum 10 digits after the decimal
+for item,value in values.items():
+    values[item] = round(value,10)
 
-output = [f'{item}: {values[item]}' for item in values]
-# print(output)
-text = ""
-with open("command_script.txt", 'w') as file:
-    for line in output:
-        file.write(line + "\n")
+# print(values)
+output.writeCSV(values)

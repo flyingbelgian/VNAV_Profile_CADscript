@@ -1,11 +1,12 @@
-import filehandler
+import input
 import math
 
 def getSource():
+    '''Reads the constants.csv and variables.csv into a dictionary of parameters. Converts variables ft, deg, NM and kt where necessary'''
     #start library with all values by loading constants
-    values = filehandler.Constants("constants.csv").values
+    values = input.Constants("constants.csv").values
     #get variables and convert to SI prior to adding to library
-    variable_source = filehandler.Variables("variables.csv")
+    variable_source = input.Variables("variables.csv")
     for item in variable_source.values:
         if item[2] == 'ft':
             values[item[0]] = float(item[1])*values['ft2m']
@@ -20,6 +21,7 @@ def getSource():
     return values
 
 def addCalcVariables(values):
+    '''Outputs a dictionary with calculated reference values to add to the dictionary of parameters'''
     new_values = {}
     Dist_FAPtoTHR = (values['Alt_FAP'] - values['Elev_THR'] - values['RDH']) / values['VPA_Prom']
     new_values['Dist_FAPtoTHR'] = Dist_FAPtoTHR
@@ -36,6 +38,7 @@ def addCalcVariables(values):
     return new_values
 
 def addHL(values):
+    '''Outputs a dictionary with calculated HL allowances to add to the dictionary of parameters'''
     new_values = {}
     HLadjelev = 0
     if values['Elev_AD'] > 900:
@@ -53,6 +56,7 @@ def addHL(values):
     return new_values
 
 def addTempCorr(values):
+    '''Outputs a dictionary with calculated temperature correction to add to the dictionary of parameters'''
     new_values = {}
     deltatemp = values['Temp_ISA']
     Lo = values['Lo']
@@ -64,8 +68,8 @@ def addTempCorr(values):
     return new_values
 
 def addOAS(values):
+    '''Outputs a dictionary with OAS parameters to add to the dictionary of parameters'''
     new_values = {}
-
     hFAP = values['Alt_FAP'] - values['Elev_THR']
     ypsilon = 0.08 * values['g']
     Hi = values['H0']
@@ -73,19 +77,16 @@ def addOAS(values):
         Hi = values['H10000']
     elif values['Elev_THR'] > (5000 * values['ft2m']):
         Hi = values['H5000']
-    
     VPA_Min = (hFAP - values['TempCorr'] - values['RDH']) / values['Dist_FAPtoTHR']
     new_values['VPA_Min'] = VPA_Min
-    
     grad_FAS = (hFAP + values['TempCorr'] - Hi) * (values['VPA_Prom'] / (hFAP - Hi))
     new_values['grad_FAS'] = grad_FAS
-    
     xFAS = ((Hi - values['RDH']) / values['VPA_Prom']) + values['ATT_FAF']
     new_values['xFAS'] = xFAS
-    
     xSEC30 = xFAS - ((Hi - 30) / grad_FAS) #point at which secondary surface height reaches 30m above ground plane
     new_values['xSEC30'] = xSEC30
-    
+    altFAF = (values['Dist_FAFtoTHR'] - xFAS) * grad_FAS
+    new_values['altFAF'] = altFAF    
     xZ_A_adj = (values['HL_A_calc'] - values['RDH']) / values['VPA_Prom'] \
                  - (values['ATT_MAPt'] + 2*values['TAS_Final_A']*math.sin(math.atan(values['VPA_Prom'])) \
                  /ypsilon*(values['TAS_Final_A']+values['MA_Wind']))
@@ -108,20 +109,14 @@ def addOAS(values):
         new_values['xZ_B_calc'] = values['xZ_B_std']
         new_values['xZ_C_calc'] = values['xZ_C_std']
         new_values['xZ_D_calc'] = values['xZ_D_std']
-
     new_values['xSOC_A'] = new_values['xZ_A_calc'] + ((values['OCH_A'] - values['HL_A_calc']) / values['VPA_Prom'])
     new_values['xSOC_B'] = new_values['xZ_B_calc'] + ((values['OCH_B'] - values['HL_B_calc']) / values['VPA_Prom'])
     new_values['xSOC_C'] = new_values['xZ_C_calc'] + ((values['OCH_C'] - values['HL_C_calc']) / values['VPA_Prom'])
     new_values['xSOC_D'] = new_values['xZ_D_calc'] + ((values['OCH_D'] - values['HL_D_calc']) / values['VPA_Prom'])
-
-    # new_values['xSOC_A_LNAV'] = - values['ATT_MAPt'] - ( (3+15) * (values['TAS_Final_A'] + values['MA_Wind']) )
-    # new_values['xSOC_B_LNAV'] = - values['ATT_MAPt'] - ( (3+15) * (values['TAS_Final_B'] + values['MA_Wind']) )
-    # new_values['xSOC_C_LNAV'] = - values['ATT_MAPt'] - ( (3+15) * (values['TAS_Final_C'] + values['MA_Wind']) )
-    # new_values['xSOC_D_LNAV'] = - values['ATT_MAPt'] - ( (3+15) * (values['TAS_Final_D'] + values['MA_Wind']) )
-
     return new_values
 
 def addLateralLimits(values):
+    '''Outputs a dictionary with calculated lateral limits for the start, finish and splays of the protection areas'''
     new_values = {}
     xFAF_start = values['Dist_FAFtoTHR'] + values['ATT_FAF']
     new_values['xFAF_start'] = xFAF_start
@@ -144,5 +139,4 @@ def addLateralLimits(values):
     new_values['xVNAV_end_B'] = xVNAV_end_B
     new_values['xVNAV_end_C'] = xVNAV_end_C
     new_values['xVNAV_end_D'] = xVNAV_end_D
-
     return new_values
