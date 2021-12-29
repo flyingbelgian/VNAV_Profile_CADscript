@@ -1,4 +1,4 @@
-import FreeCAD, Part
+import FreeCAD, Part, csv
 
 DOC = FreeCAD.activeDocument()
 DOC_NAME = "SurfaceExperimenting"
@@ -11,7 +11,7 @@ def clear_doc():
 def setview():
     """Rearrange View"""
     FreeCAD.Gui.SendMsgToActiveView("ViewFit")
-    FreeCAD.Gui.activeDocument().activeView().viewIsometric()
+    FreeCAD.Gui.activeDocument().activeView().viewTop()
     FreeCAD.Gui.activeDocument().activeView().setAxisCross(True)
 
 def makeSurf(V1,V2,V3,V4):
@@ -23,10 +23,20 @@ def makeSurf(V1,V2,V3,V4):
     surf = Part.makeRuledSurface(E1, E3)
     return surf
 
-def fuseObjects(name,objects):
-    obj = DOC.addObject("Part::MultiFuse", name)
-    obj.Shapes = objects
-    return obj
+def makeSegment(width_start, width_end, x_start, x_end):
+    V1 = FreeCAD.Vector(x_start,width_start,0)
+    V2 = FreeCAD.Vector(x_start,width_start/2,0)
+    V3 = FreeCAD.Vector(x_start,-width_start/2,0)
+    V4 = FreeCAD.Vector(x_start,-width_start,0)
+    V5 = FreeCAD.Vector(x_end,width_end,0)
+    V6 = FreeCAD.Vector(x_end,width_end/2,0)
+    V7 = FreeCAD.Vector(x_end,-width_end/2,0)
+    V8 = FreeCAD.Vector(x_end,-width_end,0)
+    primsurf = makeSurf(V2,V3,V6,V7)
+    secsurf1 = makeSurf(V1,V2,V5,V6)
+    secsurf2 = makeSurf(V3,V4,V7,V8)
+    segment = primsurf.fuse((secsurf1, secsurf2)).removeSplitter()
+    return segment
 
 if DOC is None:
     FreeCAD.newDocument(DOC_NAME)
@@ -35,12 +45,14 @@ if DOC is None:
 else:
     clear_doc()
 
-m = 1
+#Import parameters
+parameters = {}
+with open("D:\GitHub\VNAV_Profile_CADscript\parameters.csv") as source:
+    data = csv.reader(source)
+    for row in data:
+        parameters[row[0]] = float(row[1])
 
-StartWidth = 2000*m
-EndWidth = 4000*m
-Length = 8000*m
-Height = 100*m
+m = 1 #this value set to 1000 or as required to obtain correct final dimensions
 
 THRx = 332638.270*m
 THRy = 6241727.539*m
@@ -48,21 +60,17 @@ THRz = 4.915*m
 THR = FreeCAD.Vector(THRx, THRy, THRz)
 THR_angle = 166+(47/60)+(3/3600)
 
-V1 = FreeCAD.Vector(-StartWidth,0,Height)
-V2 = FreeCAD.Vector(-StartWidth/2,0,0)
-V3 = FreeCAD.Vector(StartWidth/2,0,0)
-V4 = FreeCAD.Vector(StartWidth,0,Height)
-V5 = FreeCAD.Vector(-EndWidth,Length,Height)
-V6 = FreeCAD.Vector(-EndWidth/2,Length,0)
-V7 = FreeCAD.Vector(EndWidth/2,Length,0)
-V8 = FreeCAD.Vector(EndWidth,Length,Height)
+#Surface 1 - Nominal FAF to end of splay in
+segment1 = makeSegment(parameters['SW_FAF']*m, parameters['SW_MAPt']*m, parameters['Dist_FAFtoTHR']*m, parameters['xFAF_splay']*m)
+Part.show(segment1, "Segment_1")
 
-primsurf = makeSurf(V2,V3,V6,V7)
-secsurf1 = makeSurf(V1,V2,V5,V6)
-secsurf2 = makeSurf(V3,V4,V7,V8)
+#Surface2 - end of splay in to start of splay out
+segment2 = makeSegment(parameters['SW_MAPt']*m, parameters['SW_MAPt']*m, parameters['xFAF_splay']*m, parameters['xMAPt_start']*m)
+Part.show(segment2, "Segment_2")
 
-Surface = primsurf.fuse((secsurf1, secsurf2)).removeSplitter()
-Part.show(Surface, "Surface")
+#Surface3 - start splay out to end of splay out in MA
+segment3 = makeSegment(parameters['SW_MAPt']*m, parameters['SW_MA']*m, parameters['xMAPt_start']*m, parameters['xMAPt_splay']*m)
+Part.show(segment3, "Segment_3")
 
 #Surface.Placement=FreeCAD.Placement(THR, FreeCAD.Rotation(-THR_angle,0,0), FreeCAD.Vector(0,0,0))
 
