@@ -1,4 +1,4 @@
-import FreeCAD, Part, Mesh, MeshPart
+import FreeCAD, Part
 
 DOC = FreeCAD.activeDocument()
 DOC_NAME = "SurfaceExperimenting"
@@ -57,18 +57,14 @@ V6 = FreeCAD.Vector(-EndWidth/2,Length,0)
 V7 = FreeCAD.Vector(EndWidth/2,Length,0)
 V8 = FreeCAD.Vector(EndWidth,Length,Height)
 
-primSurf = DOC.addObject("Part::Feature", "Primary")
-primSurf.Shape = makeSurf(V2,V3,V6,V7)
+primsurf = makeSurf(V2,V3,V6,V7)
+secsurf1 = makeSurf(V1,V2,V5,V6)
+secsurf2 = makeSurf(V3,V4,V7,V8)
 
-secSurf_pos = DOC.addObject("Part::Feature", "Secondary 1")
-secSurf_pos.Shape = makeSurf(V1,V2,V5,V6)
+Surface = primsurf.fuse((secsurf1, secsurf2)).removeSplitter()
+Part.show(Surface, "Surface")
 
-secSurf_neg = DOC.addObject("Part::Feature", "Secondary 2")
-secSurf_neg.Shape = makeSurf(V3,V4,V7,V8)
-
-Surface = fuseObjects("Surface 1", (primSurf, secSurf_pos, secSurf_neg))
-
-Surface.Placement=FreeCAD.Placement(THR, FreeCAD.Rotation(-THR_angle,0,0), FreeCAD.Vector(0,0,0))
+#Surface.Placement=FreeCAD.Placement(THR, FreeCAD.Rotation(-THR_angle,0,0), FreeCAD.Vector(0,0,0))
 
 DOC.recompute()
 setview()

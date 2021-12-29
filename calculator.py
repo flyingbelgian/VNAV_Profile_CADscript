@@ -25,7 +25,7 @@ def addCalcVariables(values):
     new_values = {}
     Dist_FAPtoTHR = (values['Alt_FAP'] - values['Elev_THR'] - values['RDH']) / values['VPA_Prom']
     new_values['Dist_FAPtoTHR'] = Dist_FAPtoTHR
-    TAS_Conversion = 171233 * math.pow(((288+values['Temp_ISA'])-(0.006496*values['Elev_AD'])),0.5) / math.pow(288-(0.006496*values['Elev_AD']),2.628)
+    TAS_Conversion = 171233 * math.pow(((288+values['Temp_DevISA'])-(0.006496*values['Elev_AD'])),0.5) / math.pow(288-(0.006496*values['Elev_AD']),2.628)
     new_values['TAS_Conversion'] = TAS_Conversion
     new_values['TAS_Final_A'] = values['IAS_Final_A'] * TAS_Conversion
     new_values['TAS_Final_B'] = values['IAS_Final_B'] * TAS_Conversion
@@ -58,7 +58,7 @@ def addHL(values):
 def addTempCorr(values):
     '''Outputs a dictionary with calculated temperature correction to add to the dictionary of parameters'''
     new_values = {}
-    deltatemp = values['Temp_ISA']
+    deltatemp = values['Temp_DevISA']
     Lo = values['Lo']
     hFAP = values['Alt_FAP'] - values['Elev_THR']
     To = values['To']
@@ -89,16 +89,16 @@ def addOAS(values):
     new_values['altFAF'] = altFAF    
     xZ_A_adj = (values['HL_A_calc'] - values['RDH']) / values['VPA_Prom'] \
                  - (values['ATT_MAPt'] + 2*values['TAS_Final_A']*math.sin(math.atan(values['VPA_Prom'])) \
-                 /ypsilon*(values['TAS_Final_A']+values['MA_Wind']))
+                 /ypsilon*(values['TAS_Final_A']+values['Wind_MA']))
     xZ_B_adj = (values['HL_B_calc'] - values['RDH']) / values['VPA_Prom'] \
                  - (values['ATT_MAPt'] + 2*values['TAS_Final_B']*math.sin(math.atan(values['VPA_Prom'])) \
-                 /ypsilon*(values['TAS_Final_B']+values['MA_Wind']))
+                 /ypsilon*(values['TAS_Final_B']+values['Wind_MA']))
     xZ_C_adj = (values['HL_C_calc'] - values['RDH']) / values['VPA_Prom'] \
                  - (values['ATT_MAPt'] + 2*values['TAS_Final_C']*math.sin(math.atan(values['VPA_Prom'])) \
-                 /ypsilon*(values['TAS_Final_C']+values['MA_Wind']))
+                 /ypsilon*(values['TAS_Final_C']+values['Wind_MA']))
     xZ_D_adj = (values['HL_D_calc'] - values['RDH']) / values['VPA_Prom'] \
                  - (values['ATT_MAPt'] + 2*values['TAS_Final_D']*math.sin(math.atan(values['VPA_Prom'])) \
-                 /ypsilon*(values['TAS_Final_D']+values['MA_Wind']))
+                 /ypsilon*(values['TAS_Final_D']+values['Wind_MA']))
     if values['Elev_AD'] > 900 or math.degrees(math.atan(values['VPA_Prom'])) > 3.2:
         new_values['xZ_A_calc'] = min(values['xZ_A_std'], xZ_A_adj)
         new_values['xZ_B_calc'] = min(values['xZ_B_std'], xZ_B_adj)
