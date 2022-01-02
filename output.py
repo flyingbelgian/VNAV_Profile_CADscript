@@ -1,7 +1,7 @@
-def writeCSV(values):
-    with open("parameters.csv", 'w') as file:
+def writeCSV(values, name):
+    with open(name, 'w') as file:
         for item,value in values.items():
-            file.write(f"{item},{value}\n")
+            file.write(f"{item},{round(value,10)}\n")
 
 def drawFAS(values):
     start = (values['xFAS'],0)

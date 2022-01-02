@@ -3,7 +3,8 @@ import FreeCAD, Part, csv
 DOC = FreeCAD.activeDocument()
 DOC_NAME = "SurfaceExperimenting"
 
-####### At the moment this always assumes Cat D aicraft, functionality for different aircraft categories to be added later
+####### This file to be trimmed down to take a list of surface definitions and then just draw the surfaces
+####### all other calculations to be performed outside this FreeCAD script
 
 m = 1 #this value set to 1000 or as required to obtain correct final dimensions
 z = 5 #this value is multiplier for elevation to exaggerate vertical dimension
